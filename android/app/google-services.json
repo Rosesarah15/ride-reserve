@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "823727097019",
+    "project_id": "bus-booking-12776",
+    "storage_bucket": "bus-booking-12776.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:823727097019:android:9f868a19c5a7a4de5fd59e",
+        "android_client_info": {
+          "package_name": "com.example.bus_booking"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtQ_efPEk0YaFxSws-uQOmIyxX_Iws9Po"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
