@@ -1,5 +1,5 @@
 import 'package:bus_booking/firebase_options.dart';
-import 'package:bus_booking/home/presentation/pages/bus_booking_page.dart';
+import 'package:bus_booking/splash/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -23,7 +23,7 @@ class ApplicationEntry extends StatelessWidget {
       theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
         ),
-      home: const RideReservePage(),
+      home: const SplashScreen(),
     );
   }
 }
