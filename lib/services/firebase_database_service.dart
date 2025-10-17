@@ -1,49 +1,103 @@
+import 'package:bus_booking/models/trip_search_result.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/bus_model.dart';
 import '../models/booking_model.dart';
+import '../models/booking_details_model.dart';
+import '../models/company_model.dart';
 import '../models/notification_model.dart';
+import '../models/route_model.dart';
+import '../models/schedule_model.dart';
 
 class FirebaseDatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Bus operations
-  Future<List<BusModel>> searchBuses({
-    required String destination,
-    DateTime? departureDate,
-  }) async {
+  Future<List<String>> getOrigins() async {
     try {
-      Query query = _firestore.collection('buses')
-          .where('destination', isEqualTo: destination);
-
-      if (departureDate != null) {
-        final startOfDay = DateTime(departureDate.year, departureDate.month, departureDate.day);
-        final endOfDay = DateTime(departureDate.year, departureDate.month, departureDate.day, 23, 59, 59);
-        
-        query = query
-            .where('departureDate', isGreaterThanOrEqualTo: startOfDay)
-            .where('departureDate', isLessThanOrEqualTo: endOfDay);
-      }
-
-      final querySnapshot = await query.get();
-      return querySnapshot.docs
-          .map((doc) => BusModel.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
+      final querySnapshot = await _firestore.collection('routes').get();
+      final origins = querySnapshot.docs.map((doc) => doc.data()['origin'] as String).toSet().toList();
+      return origins;
     } catch (e) {
-      throw Exception('Failed to search buses: $e');
+      throw Exception('Failed to get origins: $e');
     }
   }
 
   Future<List<String>> getDestinations() async {
     try {
-      print('Fetching destinations from Firestore...');
-      final querySnapshot = await _firestore.collection('destinations').get();
-      final destinations = querySnapshot.docs.map((doc) => doc.id).toList();
-      print('Found ${destinations.length} destinations: $destinations');
+      final querySnapshot = await _firestore.collection('routes').get();
+      final destinations = querySnapshot.docs.map((doc) => doc.data()['destination'] as String).toSet().toList();
       return destinations;
     } catch (e) {
-      print('Error fetching destinations: $e');
       throw Exception('Failed to get destinations: $e');
     }
+  }
+
+  Future<List<TripSearchResult>> searchSchedules({
+    required String origin,
+    required String destination,
+    required DateTime date,
+  }) async {
+    try {
+      // 1. Find the route id
+      final routeQuery = await _firestore.collection('routes')
+          .where('origin', isEqualTo: origin)
+          .where('destination', isEqualTo: destination)
+          .limit(1)
+          .get();
+
+      if (routeQuery.docs.isEmpty) {
+        return [];
+      }
+      final route = RouteModel.fromMap(routeQuery.docs.first.data());
+
+      // 2. Find schedules for that route on the given date
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+      final scheduleQuery = await _firestore.collection('schedules')
+          .where('routeId', isEqualTo: route.id)
+          .where('departureTime', isGreaterThanOrEqualTo: startOfDay.toIso8601String())
+          .where('departureTime', isLessThanOrEqualTo: endOfDay.toIso8601String())
+          .get();
+
+      if (scheduleQuery.docs.isEmpty) {
+        return [];
+      }
+
+      final schedules = scheduleQuery.docs.map((doc) => ScheduleModel.fromMap(doc.data())).toList();
+
+      // 3. Fetch bus and company details for each schedule
+      List<TripSearchResult> results = [];
+      for (final schedule in schedules) {
+        final busDoc = await _firestore.collection('buses').doc(schedule.busId).get();
+        if (!busDoc.exists) continue;
+        final bus = BusModel.fromMap(busDoc.data()!);
+
+        final companyDoc = await _firestore.collection('companies').doc(bus.companyId).get();
+        if (!companyDoc.exists) continue;
+        final company = CompanyModel.fromMap(companyDoc.data()!);
+
+        results.add(TripSearchResult(
+          schedule: schedule,
+          route: route,
+          bus: bus,
+          company: company,
+        ));
+      }
+
+      return results;
+
+    } catch (e) {
+      throw Exception('Failed to search schedules: $e');
+    }
+  }
+
+  Stream<List<String>> getBookedSeats(String scheduleId) {
+    return _firestore
+        .collection('bookings')
+        .where('scheduleId', isEqualTo: scheduleId)
+        .where('status', whereIn: [BookingStatus.confirmed.name, BookingStatus.pending.name])
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data()['seatNumber'] as String).toList());
   }
 
   // Booking operations
@@ -69,6 +123,54 @@ class FirebaseDatabaseService {
           .toList();
     } catch (e) {
       throw Exception('Failed to get user bookings: $e');
+    }
+  }
+
+  Future<List<BookingDetailsModel>> getUserBookingDetails(String userId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('bookings')
+          .where('userId', isEqualTo: userId)
+          .orderBy('bookingDate', descending: true)
+          .get();
+
+      List<BookingDetailsModel> bookingDetails = [];
+      
+      for (final doc in querySnapshot.docs) {
+        final booking = BookingModel.fromMap(doc.data());
+        
+        // Fetch schedule details
+        final scheduleDoc = await _firestore.collection('schedules').doc(booking.scheduleId).get();
+        if (!scheduleDoc.exists) continue;
+        final schedule = ScheduleModel.fromMap(scheduleDoc.data()!);
+        
+        // Fetch route details
+        final routeDoc = await _firestore.collection('routes').doc(schedule.routeId).get();
+        if (!routeDoc.exists) continue;
+        final route = RouteModel.fromMap(routeDoc.data()!);
+        
+        // Fetch bus details
+        final busDoc = await _firestore.collection('buses').doc(schedule.busId).get();
+        if (!busDoc.exists) continue;
+        final bus = BusModel.fromMap(busDoc.data()!);
+        
+        // Fetch company details
+        final companyDoc = await _firestore.collection('companies').doc(bus.companyId).get();
+        if (!companyDoc.exists) continue;
+        final company = CompanyModel.fromMap(companyDoc.data()!);
+        
+        bookingDetails.add(BookingDetailsModel(
+          booking: booking,
+          schedule: schedule,
+          route: route,
+          bus: bus,
+          company: company,
+        ));
+      }
+      
+      return bookingDetails;
+    } catch (e) {
+      throw Exception('Failed to get user booking details: $e');
     }
   }
 
@@ -134,99 +236,88 @@ class FirebaseDatabaseService {
     }
   }
 
+  // Admin functions
+  Future<void> createRoute(RouteModel route) async {
+    await _firestore.collection('routes').doc(route.id).set(route.toMap());
+  }
+
+  Stream<QuerySnapshot> getRoutesStream() {
+    return _firestore.collection('routes').snapshots();
+  }
+
+  Future<void> createCompany(CompanyModel company) async {
+    await _firestore.collection('companies').doc(company.id).set(company.toMap());
+  }
+
+  Stream<QuerySnapshot> getCompaniesStream() {
+    return _firestore.collection('companies').snapshots();
+  }
+
+  Future<void> createBus(BusModel bus) async {
+    await _firestore.collection('buses').doc(bus.id).set(bus.toMap());
+  }
+
+  Stream<QuerySnapshot> getBusesStream() {
+    return _firestore.collection('buses').snapshots();
+  }
+
+  Future<void> createSchedules(List<ScheduleModel> schedules) async {
+    final batch = _firestore.batch();
+    for (final schedule in schedules) {
+      final docRef = _firestore.collection('schedules').doc(schedule.id);
+      batch.set(docRef, schedule.toMap());
+    }
+    await batch.commit();
+  }
+
   // Initialize sample data
   Future<void> initializeSampleData() async {
-    try {
-      print('Initializing sample data...');
-      
-      // Add sample destinations
-      final destinations = [
-        'Kampala',
-        'Entebbe',
-        'Jinja',
-        'Masaka',
-        'Mbarara',
-        'Gulu',
-        'Lira',
-        'Arua',
-        'Fort Portal',
-        'Kabale',
-        'Mbale',
-        'Soroti',
-        'Kasese',
-        'Busia',
-        'Koboko',
-        'Nebbi',
-        'Pakwach',
-        'Moroto',
-        'Iganga',
-      ];
+    final batch = _firestore.batch();
 
-      print('Adding ${destinations.length} destinations...');
-      for (String destination in destinations) {
-        await _firestore.collection('destinations').doc(destination).set({
-          'name': destination,
-          'createdAt': DateTime.now().toIso8601String(),
-        });
-        print('Added destination: $destination');
-      }
-      print('Destinations added successfully');
-
-      // Add sample buses
-      final buses = [
-        BusModel(
-          id: 'bus1',
-          companyName: 'Post Bus Uganda',
-          destination: 'Kampala',
-          departureTime: '08:00',
-          arrivalTime: '10:00',
-          fee: 15000.0,
-          totalSeats: 50,
-          availableSeats: 35,
-          busNumberPlate: 'UAA 123A',
-          rating: 4.5,
-          amenities: ['WiFi', 'AC', 'Water'],
-          departureDate: DateTime.now().add(const Duration(days: 1)),
-        ),
-        BusModel(
-          id: 'bus2',
-          companyName: 'Jaguar Executive',
-          destination: 'Entebbe',
-          departureTime: '09:30',
-          arrivalTime: '11:00',
-          fee: 12000.0,
-          totalSeats: 40,
-          availableSeats: 28,
-          busNumberPlate: 'UAB 456B',
-          rating: 4.2,
-          amenities: ['WiFi', 'AC'],
-          departureDate: DateTime.now().add(const Duration(days: 1)),
-        ),
-        BusModel(
-          id: 'bus3',
-          companyName: 'Link Bus Services',
-          destination: 'Jinja',
-          departureTime: '14:00',
-          arrivalTime: '16:30',
-          fee: 18000.0,
-          totalSeats: 45,
-          availableSeats: 42,
-          busNumberPlate: 'UAC 789C',
-          rating: 4.0,
-          amenities: ['AC', 'Water'],
-          departureDate: DateTime.now().add(const Duration(days: 1)),
-        ),
-      ];
-
-      print('Adding ${buses.length} sample buses...');
-      for (BusModel bus in buses) {
-        await _firestore.collection('buses').doc(bus.id).set(bus.toMap());
-        print('Added bus: ${bus.companyName} to ${bus.destination}');
-      }
-      print('Sample data initialization completed successfully');
-    } catch (e) {
-      print('Error in initializeSampleData: $e');
-      throw Exception('Failed to initialize sample data: $e');
+    // Add sample companies
+    final companies = [
+      CompanyModel(id: 'company1', name: 'Post Bus Uganda', logoUrl: '', rating: 4.5),
+      CompanyModel(id: 'company2', name: 'Jaguar Executive', logoUrl: '', rating: 4.2),
+      CompanyModel(id: 'company3', name: 'Link Bus Services', logoUrl: '', rating: 4.0),
+    ];
+    for (final company in companies) {
+      batch.set(_firestore.collection('companies').doc(company.id), company.toMap());
     }
+
+    // Add sample buses
+    final buses = [
+      BusModel(id: 'bus1', companyId: 'company1', numberPlate: 'UAA 123A', type: BusType.standard, totalSeats: 50, amenities: ['AC', 'Water']),
+      BusModel(id: 'bus2', companyId: 'company2', numberPlate: 'UAB 456B', type: BusType.vip, totalSeats: 40, amenities: ['WiFi', 'AC', 'Snacks']),
+      BusModel(id: 'bus3', companyId: 'company3', numberPlate: 'UAC 789C', type: BusType.luxury, totalSeats: 30, amenities: ['WiFi', 'AC', 'Reclining Seats', 'Meals']),
+    ];
+    for (final bus in buses) {
+      batch.set(_firestore.collection('buses').doc(bus.id), bus.toMap());
+    }
+
+    // Add sample routes
+    final routes = [
+      RouteModel(id: 'route1', origin: 'Kampala', destination: 'Entebbe'),
+      RouteModel(id: 'route2', origin: 'Kampala', destination: 'Jinja'),
+      RouteModel(id: 'route3', origin: 'Kampala', destination: 'Mbarara'),
+      RouteModel(id: 'route4', origin: 'Jinja', destination: 'Kampala'),
+    ];
+    for (final route in routes) {
+      batch.set(_firestore.collection('routes').doc(route.id), route.toMap());
+    }
+
+    // Add sample schedules
+    final now = DateTime.now();
+    final schedules = [
+      ScheduleModel(id: 'schedule1', routeId: 'route1', busId: 'bus1', departureTime: DateTime(now.year, now.month, now.day, 8), arrivalTime: DateTime(now.year, now.month, now.day, 10), fee: 15000),
+      ScheduleModel(id: 'schedule2', routeId: 'route2', busId: 'bus2', departureTime: DateTime(now.year, now.month, now.day, 9, 30), arrivalTime: DateTime(now.year, now.month, now.day, 12, 30), fee: 25000),
+      ScheduleModel(id: 'schedule3', routeId: 'route3', busId: 'bus3', departureTime: DateTime(now.year, now.month, now.day, 14), arrivalTime: DateTime(now.year, now.month, now.day, 18), fee: 40000),
+      ScheduleModel(id: 'schedule4', routeId: 'route1', busId: 'bus2', departureTime: DateTime(now.year, now.month, now.day, 11), arrivalTime: DateTime(now.year, now.month, now.day, 13), fee: 20000),
+    ];
+    for (final schedule in schedules) {
+      batch.set(_firestore.collection('schedules').doc(schedule.id), schedule.toMap());
+    }
+
+    await batch.commit();
+    print('Sample data initialization completed successfully');
   }
 }

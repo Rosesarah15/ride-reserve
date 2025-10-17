@@ -1,4 +1,6 @@
+import 'package:bus_booking/admin/admin_home_page.dart';
 import 'package:bus_booking/home/presentation/pages/main_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -17,16 +19,31 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: _emailController.text,
           password: _passwordController.text,
         );
 
+        final user = credential.user;
+        if (user == null) {
+          throw Exception('User not found.');
+        }
+
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        final isAdmin = userDoc.exists && userDoc.data()!['Role'] == 'Admin';
+
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainPage()),
-          );
+          if (isAdmin) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AdminHomePage()),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const MainPage()),
+            );
+          }
         }
       } on FirebaseAuthException catch (e) {
         if (mounted) {

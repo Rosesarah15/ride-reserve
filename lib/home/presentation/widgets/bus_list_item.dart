@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../../models/bus_model.dart';
+import '../../../models/trip_search_result.dart';
+import 'package:intl/intl.dart';
 
 class BusListItem extends StatelessWidget {
-  final BusModel bus;
+  final TripSearchResult trip;
   final VoidCallback onTap;
 
   const BusListItem({
     super.key,
-    required this.bus,
+    required this.trip,
     required this.onTap,
   });
 
@@ -33,14 +34,14 @@ class BusListItem extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      bus.companyName,
+                      trip.company.name,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  if (bus.rating != null) ...[
+                  ...[
                     Icon(
                       Icons.star,
                       color: Colors.amber[600],
@@ -48,7 +49,7 @@ class BusListItem extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      bus.rating!.toStringAsFixed(1),
+                      trip.company.rating.toStringAsFixed(1),
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontWeight: FontWeight.w500,
@@ -69,7 +70,7 @@ class BusListItem extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    bus.busNumberPlate,
+                    trip.bus.numberPlate,
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontWeight: FontWeight.w500,
@@ -83,7 +84,7 @@ class BusListItem extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${bus.departureTime} - ${bus.arrivalTime}',
+                    '${DateFormat('HH:mm').format(trip.schedule.departureTime)} - ${DateFormat('HH:mm').format(trip.schedule.arrivalTime)}',
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontWeight: FontWeight.w500,
@@ -103,14 +104,14 @@ class BusListItem extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${bus.availableSeats} seats available',
+                    '${trip.bus.totalSeats} seats total',
                     style: TextStyle(
                       color: Colors.green[600],
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const Spacer(),
-                  if (bus.amenities.isNotEmpty) ...[
+                  if (trip.bus.amenities.isNotEmpty) ...[
                     Icon(
                       Icons.local_offer,
                       color: Colors.orange[600],
@@ -118,7 +119,7 @@ class BusListItem extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      bus.amenities.join(', '),
+                      trip.bus.amenities.join(', '),
                       style: TextStyle(
                         color: Colors.orange[600],
                         fontSize: 12,
@@ -134,7 +135,7 @@ class BusListItem extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'UGX ${bus.fee.toStringAsFixed(0)}',
+                    'UGX ${trip.schedule.fee.toStringAsFixed(0)}',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,

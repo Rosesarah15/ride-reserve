@@ -1,117 +1,191 @@
-import 'package:bus_booking/home/presentation/pages/receipt_page.dart';
+
 import 'package:bus_booking/models/booking_model.dart';
-import 'package:bus_booking/models/bus_model.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:bus_booking/models/trip_search_result.dart';
+import 'package:bus_booking/services/firebase_database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-enum PaymentMethod {
-  airtelMoney,
-  mtnMobileMoney,
-  creditDebitCard,
-}
+import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 class PaymentPage extends StatefulWidget {
-  final BusModel bus;
+  final TripSearchResult trip;
+  final String selectedSeat;
 
-  const PaymentPage({super.key, required this.bus});
+  const PaymentPage({super.key, required this.trip, required this.selectedSeat});
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
 }
 
 class _PaymentPageState extends State<PaymentPage> {
-  PaymentMethod? _paymentMethod = PaymentMethod.airtelMoney;
+  final FirebaseDatabaseService _databaseService = FirebaseDatabaseService();
+  bool _isProcessing = false;
 
-  Future<void> _pay() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      // Handle user not logged in
-      return;
-    }
+  Future<void> _createBooking(String paymentMethod) async {
+    setState(() {
+      _isProcessing = true;
+    });
 
- final booking = BookingModel(
-  id: FirebaseFirestore.instance.collection('bookings').doc().id,
-  userId: user.uid,
-  busId: widget.bus.id,
-  destination: widget.bus.destination,
-  busCompanyName: widget.bus.companyName,  // ✅ Correct
-  busNumberPlate: widget.bus.busNumberPlate,
-  departureTime: widget.bus.departureTime,
-  fee: widget.bus.fee,  // ✅ Correct
-  paymentMethod: _paymentMethod?.name ?? 'airtelMoney',  // ✅ Add missing required field
-  paymentStatus: 'pending',  // ✅ Add missing required field
-  receiptNumber: 'BK-${DateTime.now().millisecondsSinceEpoch}',
-  bookingDate: DateTime.now(),
-  departureDate: widget.bus.departureDate,  // ✅ Add missing required field
-  status: BookingStatus.pending,  // ✅ Add missing required field
-);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('You must be logged in to book.');
+      }
 
-    await FirebaseFirestore.instance.collection('bookings').doc(booking.id).set(booking.toMap());
-
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => ReceiptPage(booking: booking)),
+      final booking = BookingModel(
+        id: const Uuid().v4(),
+        userId: user.uid,
+        scheduleId: widget.trip.schedule.id,
+        seatNumber: widget.selectedSeat,
+        fee: widget.trip.schedule.fee,
+        paymentMethod: paymentMethod,
+        status: BookingStatus.confirmed, // Mocking successful payment
+        bookingDate: DateTime.now(),
       );
+
+      await _databaseService.createBooking(booking);
+
+      // Show success dialog
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Booking Successful'),
+            content: const Text('Your booking has been confirmed. A receipt has been sent to your email.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+
+        // Navigate back to the home page
+        if (mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      }
+
+    } catch (e) {
+      // Show error dialog
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Booking Failed'),
+            content: Text(e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final trip = widget.trip;
+    final summary = {
+      'Origin': trip.route.origin,
+      'Destination': trip.route.destination,
+      'Date': DateFormat('EEE, MMM d, yyyy').format(trip.schedule.departureTime),
+      'Time': DateFormat('h:mm a').format(trip.schedule.departureTime),
+      'Company': trip.company.name,
+      'Bus Type': trip.bus.type.name.toUpperCase(),
+      'Seat': widget.selectedSeat,
+      'Amount': 'UGX ${trip.schedule.fee.toStringAsFixed(0)}',
+    };
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Payment'),
+        title: const Text('Confirm and Pay'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Destination: ${widget.bus.destination}'),
-            Text('Bus Company: ${widget.bus.companyName}'),
-            Text('Departure Time: ${widget.bus.departureTime}'),
-            Text('Fee: UGX ${widget.bus.fee.toStringAsFixed(0)}'),
-            const SizedBox(height: 20),
-            const Text('Select Payment Method:', style: TextStyle(fontWeight: FontWeight.bold)),
-            RadioListTile<PaymentMethod>(
-              title: const Text('Airtel Money'),
-              value: PaymentMethod.airtelMoney,
-              groupValue: _paymentMethod,
-              onChanged: (PaymentMethod? value) {
-                setState(() {
-                  _paymentMethod = value;
-                });
-              },
+      body: _isProcessing
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Booking Summary', style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: summary.entries.map((entry) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                Text(entry.value),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Text('Select Payment Method', style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _createBooking('MTN'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.yellow[700],
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Pay with MTN'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _createBooking('Airtel'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.red[600],
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Pay with Airtel'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _createBooking('Card'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.blue[600],
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Pay with Card'),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            RadioListTile<PaymentMethod>(
-              title: const Text('MTN Mobile Money'),
-              value: PaymentMethod.mtnMobileMoney,
-              groupValue: _paymentMethod,
-              onChanged: (PaymentMethod? value) {
-                setState(() {
-                  _paymentMethod = value;
-                });
-              },
-            ),
-            RadioListTile<PaymentMethod>(
-              title: const Text('Credit/Debit Card'),
-              value: PaymentMethod.creditDebitCard,
-              groupValue: _paymentMethod,
-              onChanged: (PaymentMethod? value) {
-                setState(() {
-                  _paymentMethod = value;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _pay,
-              child: const Text('Pay'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

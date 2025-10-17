@@ -1,10 +1,10 @@
-import 'package:bus_booking/models/booking_model.dart';
+import 'package:bus_booking/models/booking_details_model.dart';
 import 'package:flutter/material.dart';
 
 class ReceiptPage extends StatelessWidget {
-  final BookingModel booking;
+  final BookingDetailsModel bookingDetails;
 
-  const ReceiptPage({super.key, required this.booking});
+  const ReceiptPage({super.key, required this.bookingDetails});
 
   @override
   Widget build(BuildContext context) {
@@ -17,11 +17,11 @@ class ReceiptPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Receipt Number: ${booking.receiptNumber}'),
-            Text('Destination: ${booking.destination}'),
-            Text('Bus Company: ${booking.busCompanyName}'),
-            Text('Departure Time: ${booking.departureTime}'),
-            Text('Amount Paid: UGX ${booking.fee.toStringAsFixed(0)}'),
+            Text('Receipt Number: ${bookingDetails.receiptNumber}'),
+            Text('Destination: ${bookingDetails.destination}'),
+            Text('Bus Company: ${bookingDetails.busCompanyName}'),
+            Text('Departure Time: ${bookingDetails.departureTime}'),
+            Text('Amount Paid: UGX ${bookingDetails.fee.toStringAsFixed(0)}'),
           ],
         ),
       ),

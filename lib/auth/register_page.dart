@@ -12,7 +12,8 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -26,8 +27,10 @@ class _RegisterPageState extends State<RegisterPage> {
         );
 
         await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
-          'fullName': _fullNameController.text,
+          'FirstName': _firstNameController.text,
+          'LastName': _lastNameController.text,
           'email': _emailController.text,
+          'Role': 'user',
         });
 
         if (mounted) {
@@ -56,11 +59,21 @@ class _RegisterPageState extends State<RegisterPage> {
           child: Column(
             children: [
               TextFormField(
-                controller: _fullNameController,
-                decoration: const InputDecoration(labelText: 'Full Name'),
+                controller: _firstNameController,
+                decoration: const InputDecoration(labelText: 'First Name'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your full name';
+                    return 'Please enter your first name';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _lastNameController,
+                decoration: const InputDecoration(labelText: 'Last Name'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your last name';
                   }
                   return null;
                 },

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../models/booking_model.dart';
+import '../../../models/booking_details_model.dart';
 
 class ReceiptPage extends StatelessWidget {
-  final BookingModel booking;
+  final BookingDetailsModel bookingDetails;
 
   const ReceiptPage({
     super.key,
-    required this.booking,
+    required this.bookingDetails,
   });
 
   @override
@@ -81,19 +81,18 @@ class ReceiptPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _buildReceiptRow('Receipt Number', booking.receiptNumber),
-                    _buildReceiptRow('Booking Date', _formatDate(booking.bookingDate)),
-                    _buildReceiptRow('Destination', booking.destination),
-                    _buildReceiptRow('Bus Company', booking.busCompanyName),
-                    _buildReceiptRow('Bus Number', booking.busNumberPlate),
-                    _buildReceiptRow('Departure Time', booking.departureTime),
-                    if (booking.seatNumber != null)
-                      _buildReceiptRow('Seat Number', booking.seatNumber!),
-                    _buildReceiptRow('Payment Method', booking.paymentMethod),
+                    _buildReceiptRow('Receipt Number', bookingDetails.receiptNumber),
+                    _buildReceiptRow('Booking Date', _formatDate(bookingDetails.bookingDate)),
+                    _buildReceiptRow('Destination', bookingDetails.destination),
+                    _buildReceiptRow('Bus Company', bookingDetails.busCompanyName),
+                    _buildReceiptRow('Bus Number', bookingDetails.busNumberPlate),
+                    _buildReceiptRow('Departure Time', bookingDetails.departureTime.toString()),
+                    _buildReceiptRow('Seat Number', bookingDetails.seatNumber),
+                    _buildReceiptRow('Payment Method', bookingDetails.paymentMethod),
                     const Divider(),
                     _buildReceiptRow(
                       'Total Amount',
-                      'UGX ${booking.fee.toStringAsFixed(0)}',
+                      'UGX ${bookingDetails.fee.toStringAsFixed(0)}',
                       isTotal: true,
                     ),
                   ],
@@ -213,15 +212,15 @@ class ReceiptPage extends StatelessWidget {
     final receiptText = '''
 BusGo Booking Receipt
 ====================
-Receipt Number: ${booking.receiptNumber}
-Booking Date: ${_formatDate(booking.bookingDate)}
-Destination: ${booking.destination}
-Bus Company: ${booking.busCompanyName}
-Bus Number: ${booking.busNumberPlate}
-Departure Time: ${booking.departureTime}
-${booking.seatNumber != null ? 'Seat Number: ${booking.seatNumber}' : ''}
-Payment Method: ${booking.paymentMethod}
-Total Amount: UGX ${booking.fee.toStringAsFixed(0)}
+Receipt Number: ${bookingDetails.receiptNumber}
+Booking Date: ${_formatDate(bookingDetails.bookingDate)}
+Destination: ${bookingDetails.destination}
+Bus Company: ${bookingDetails.busCompanyName}
+Bus Number: ${bookingDetails.busNumberPlate}
+Departure Time: ${bookingDetails.departureTime}
+Seat Number: ${bookingDetails.seatNumber}
+Payment Method: ${bookingDetails.paymentMethod}
+Total Amount: UGX ${bookingDetails.fee.toStringAsFixed(0)}
     ''';
 
     Clipboard.setData(ClipboardData(text: receiptText));

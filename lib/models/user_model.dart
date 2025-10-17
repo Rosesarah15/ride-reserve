@@ -1,7 +1,9 @@
 class UserModel {
   final String uid;
-  final String fullName;
+  final String FirstName;
+  final String LastName;
   final String email;
+  final String Role;
   final String? phoneNumber;
   final String? profileImageUrl;
   final DateTime createdAt;
@@ -9,8 +11,10 @@ class UserModel {
 
   UserModel({
     required this.uid,
-    required this.fullName,
+    required this.FirstName,
+    required this.LastName,
     required this.email,
+    required this.Role,
     this.phoneNumber,
     this.profileImageUrl,
     required this.createdAt,
@@ -20,8 +24,10 @@ class UserModel {
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
-      'fullName': fullName,
+      'FirstName': FirstName,
+      'LastName': LastName,
       'email': email,
+      'Role': Role,
       'phoneNumber': phoneNumber,
       'profileImageUrl': profileImageUrl,
       'createdAt': createdAt.toIso8601String(),
@@ -32,8 +38,10 @@ class UserModel {
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       uid: map['uid'] ?? '',
-      fullName: map['fullName'] ?? '',
+      FirstName: map['FirstName'] ?? '',
+      LastName: map['LastName'] ?? '',
       email: map['email'] ?? '',
+      Role: map['Role'] ?? '',
       phoneNumber: map['phoneNumber'],
       profileImageUrl: map['profileImageUrl'],
       createdAt: DateTime.parse(map['createdAt']),
@@ -43,8 +51,10 @@ class UserModel {
 
   UserModel copyWith({
     String? uid,
-    String? fullName,
+    String? FirstName,
+    String? LastName,
     String? email,
+    String? Role,
     String? phoneNumber,
     String? profileImageUrl,
     DateTime? createdAt,
@@ -52,8 +62,10 @@ class UserModel {
   }) {
     return UserModel(
       uid: uid ?? this.uid,
-      fullName: fullName ?? this.fullName,
+      FirstName: FirstName ?? this.FirstName,
+      LastName: LastName ?? this.LastName,
       email: email ?? this.email,
+      Role: Role ?? this.Role,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       createdAt: createdAt ?? this.createdAt,
