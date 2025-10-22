@@ -1,9 +1,13 @@
-import 'package:ayinza_commons/bloc/page_event.dart';
+import 'package:equatable/equatable.dart';
 
+abstract class HomeEvent extends Equatable {
+  const HomeEvent();
 
-class HomeEvent extends PageEvent {}
+  @override
+  List<Object> get props => [];
+}
 
-abstract class BusBookingEvent extends PageEvent {
+abstract class BusBookingEvent extends Equatable {
   const BusBookingEvent();
 
   @override
@@ -13,6 +17,8 @@ abstract class BusBookingEvent extends PageEvent {
 class NavigationEvent extends HomeEvent {
   final int pageIndex;
 
- NavigationEvent (this.pageIndex);
+  const NavigationEvent(this.pageIndex);
 
+  @override
+  List<Object> get props => [pageIndex];
 } 

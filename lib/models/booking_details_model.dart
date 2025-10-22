@@ -1,4 +1,5 @@
 import 'package:bus_booking/models/booking_model.dart';
+import 'package:bus_booking/models/booking_status.dart';
 import 'package:bus_booking/models/schedule_model.dart';
 import 'package:bus_booking/models/route_model.dart';
 import 'package:bus_booking/models/bus_model.dart';
@@ -27,8 +28,8 @@ class BookingDetailsModel {
   String get busNumberPlate => bus.numberPlate;
   DateTime get departureTime => schedule.departureTime;
   DateTime get arrivalTime => schedule.arrivalTime;
-  double get fee => schedule.fee;
-  String get seatNumber => booking.seatNumber;
+  double get fee => booking.totalFee;
+  List<String> get seatNumbers => booking.seatNumbers;
   String get paymentMethod => booking.paymentMethod;
   BookingStatus get status => booking.status;
   DateTime get bookingDate => booking.bookingDate;

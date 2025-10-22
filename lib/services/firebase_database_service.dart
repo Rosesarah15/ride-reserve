@@ -3,8 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/bus_model.dart';
 import '../models/booking_model.dart';
 import '../models/booking_details_model.dart';
+import '../models/booking_status.dart';
 import '../models/company_model.dart';
 import '../models/notification_model.dart';
+import '../models/package_booking_model.dart';
+import '../models/pricing_model.dart';
 import '../models/route_model.dart';
 import '../models/schedule_model.dart';
 
@@ -95,9 +98,20 @@ class FirebaseDatabaseService {
     return _firestore
         .collection('bookings')
         .where('scheduleId', isEqualTo: scheduleId)
-        .where('status', whereIn: [BookingStatus.confirmed.name, BookingStatus.pending.name])
+        .where('status', whereIn: [
+          BookingStatus.confirmed.name,
+          BookingStatus.pending.name
+        ])
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()['seatNumber'] as String).toList());
+        .map((snapshot) {
+      final List<String> allBookedSeats = [];
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final seatNumbers = List<String>.from(data['seatNumbers'] ?? []);
+        allBookedSeats.addAll(seatNumbers);
+      }
+      return allBookedSeats;
+    });
   }
 
   // Booking operations
@@ -236,6 +250,105 @@ class FirebaseDatabaseService {
     }
   }
 
+  // Pricing operations
+  Future<void> createOrUpdatePricing(PricingModel pricing) async {
+    try {
+      await _firestore
+          .collection('pricing')
+          .doc(pricing.id)
+          .set(pricing.toMap());
+    } catch (e) {
+      throw Exception('Failed to create/update pricing: $e');
+    }
+  }
+
+  Future<PricingModel?> getPricing({
+    required String companyId,
+    required String routeId,
+    required String busType,
+  }) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('pricing')
+          .where('companyId', isEqualTo: companyId)
+          .where('routeId', isEqualTo: routeId)
+          .where('busType', isEqualTo: busType)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) return null;
+      return PricingModel.fromMap(querySnapshot.docs.first.data());
+    } catch (e) {
+      throw Exception('Failed to get pricing: $e');
+    }
+  }
+
+  Stream<QuerySnapshot> getPricingStreamByCompany(String companyId) {
+    return _firestore
+        .collection('pricing')
+        .where('companyId', isEqualTo: companyId)
+        .snapshots();
+  }
+
+  Future<void> deletePricing(String pricingId) async {
+    try {
+      await _firestore.collection('pricing').doc(pricingId).delete();
+    } catch (e) {
+      throw Exception('Failed to delete pricing: $e');
+    }
+  }
+
+  // Package booking operations
+  Future<String> createPackageBooking(PackageBookingModel packageBooking) async {
+    try {
+      final docRef = await _firestore
+          .collection('package_bookings')
+          .add(packageBooking.toMap());
+      return docRef.id;
+    } catch (e) {
+      throw Exception('Failed to create package booking: $e');
+    }
+  }
+
+  Future<List<PackageBookingModel>> getUserPackageBookings(
+    String userId,
+  ) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('package_bookings')
+          .where('userId', isEqualTo: userId)
+          .orderBy('bookingDate', descending: true)
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => PackageBookingModel.fromMap(doc.data()))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to get user package bookings: $e');
+    }
+  }
+
+  Future<void> updatePackageBookingStatus(
+    String bookingId,
+    BookingStatus status,
+  ) async {
+    try {
+      await _firestore
+          .collection('package_bookings')
+          .doc(bookingId)
+          .update({'status': status.name});
+    } catch (e) {
+      throw Exception('Failed to update package booking status: $e');
+    }
+  }
+
+  Stream<QuerySnapshot> getAllPackageBookingsStream() {
+    return _firestore
+        .collection('package_bookings')
+        .orderBy('bookingDate', descending: true)
+        .snapshots();
+  }
+
   // Admin functions
   Future<void> createRoute(RouteModel route) async {
     await _firestore.collection('routes').doc(route.id).set(route.toMap());
@@ -261,6 +374,10 @@ class FirebaseDatabaseService {
     return _firestore.collection('buses').snapshots();
   }
 
+  Stream<QuerySnapshot> getSchedulesStream() {
+    return _firestore.collection('schedules').snapshots();
+  }
+
   Future<void> createSchedules(List<ScheduleModel> schedules) async {
     final batch = _firestore.batch();
     for (final schedule in schedules) {
@@ -276,19 +393,64 @@ class FirebaseDatabaseService {
 
     // Add sample companies
     final companies = [
-      CompanyModel(id: 'company1', name: 'Post Bus Uganda', logoUrl: '', rating: 4.5),
-      CompanyModel(id: 'company2', name: 'Jaguar Executive', logoUrl: '', rating: 4.2),
-      CompanyModel(id: 'company3', name: 'Link Bus Services', logoUrl: '', rating: 4.0),
+      CompanyModel(
+        id: 'company1',
+        name: 'Post Bus Uganda',
+        license: 'LIC-2024-001',
+        logoUrl: '',
+        rating: 4.5,
+      ),
+      CompanyModel(
+        id: 'company2',
+        name: 'Jaguar Executive',
+        license: 'LIC-2024-002',
+        logoUrl: '',
+        rating: 4.2,
+      ),
+      CompanyModel(
+        id: 'company3',
+        name: 'Link Bus Services',
+        license: 'LIC-2024-003',
+        logoUrl: '',
+        rating: 4.0,
+      ),
     ];
     for (final company in companies) {
-      batch.set(_firestore.collection('companies').doc(company.id), company.toMap());
+      batch.set(
+        _firestore.collection('companies').doc(company.id),
+        company.toMap(),
+      );
     }
 
     // Add sample buses
     final buses = [
-      BusModel(id: 'bus1', companyId: 'company1', numberPlate: 'UAA 123A', type: BusType.standard, totalSeats: 50, amenities: ['AC', 'Water']),
-      BusModel(id: 'bus2', companyId: 'company2', numberPlate: 'UAB 456B', type: BusType.vip, totalSeats: 40, amenities: ['WiFi', 'AC', 'Snacks']),
-      BusModel(id: 'bus3', companyId: 'company3', numberPlate: 'UAC 789C', type: BusType.luxury, totalSeats: 30, amenities: ['WiFi', 'AC', 'Reclining Seats', 'Meals']),
+      BusModel(
+        id: 'bus1',
+        companyId: 'company1',
+        numberPlate: 'UAA 123A',
+        driver: 'John Mukasa',
+        type: BusType.ordinary,
+        totalSeats: 50,
+        amenities: ['AC', 'Water'],
+      ),
+      BusModel(
+        id: 'bus2',
+        companyId: 'company2',
+        numberPlate: 'UAB 456B',
+        driver: 'Sarah Nakato',
+        type: BusType.vip,
+        totalSeats: 40,
+        amenities: ['WiFi', 'AC', 'Snacks'],
+      ),
+      BusModel(
+        id: 'bus3',
+        companyId: 'company3',
+        numberPlate: 'UAC 789C',
+        driver: 'Peter Ouma',
+        type: BusType.ordinary,
+        totalSeats: 50,
+        amenities: ['AC', 'Water'],
+      ),
     ];
     for (final bus in buses) {
       batch.set(_firestore.collection('buses').doc(bus.id), bus.toMap());
@@ -315,6 +477,46 @@ class FirebaseDatabaseService {
     ];
     for (final schedule in schedules) {
       batch.set(_firestore.collection('schedules').doc(schedule.id), schedule.toMap());
+    }
+
+    // Add sample pricing
+    final pricingList = [
+      // Post Bus Uganda - Route 1 (Kampala to Entebbe)
+      PricingModel(
+        id: 'pricing1',
+        companyId: 'company1',
+        routeId: 'route1',
+        busType: BusTypeForPricing.ordinary,
+        passengerPrice: 15000,
+        parcelStandardPrice: 5000,
+        luggagePricePerKg: 500,
+      ),
+      // Jaguar Executive - Route 2 (Kampala to Jinja) - VIP
+      PricingModel(
+        id: 'pricing2',
+        companyId: 'company2',
+        routeId: 'route2',
+        busType: BusTypeForPricing.vip,
+        passengerPrice: 35000,
+        parcelStandardPrice: 8000,
+        luggagePricePerKg: 800,
+      ),
+      // Link Bus - Route 3 (Kampala to Mbarara)
+      PricingModel(
+        id: 'pricing3',
+        companyId: 'company3',
+        routeId: 'route3',
+        busType: BusTypeForPricing.ordinary,
+        passengerPrice: 40000,
+        parcelStandardPrice: 10000,
+        luggagePricePerKg: 1000,
+      ),
+    ];
+    for (final pricing in pricingList) {
+      batch.set(
+        _firestore.collection('pricing').doc(pricing.id),
+        pricing.toMap(),
+      );
     }
 
     await batch.commit();

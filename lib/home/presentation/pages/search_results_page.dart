@@ -1,8 +1,8 @@
+import 'package:bus_booking/home/presentation/pages/booking_type_selection_page.dart';
 import 'package:bus_booking/models/trip_search_result.dart';
 import 'package:bus_booking/services/firebase_database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'seat_selection_page.dart';
 
 class SearchResultsPage extends StatefulWidget {
   final String origin;
@@ -87,7 +87,8 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => SeatSelectionPage(trip: result),
+                        builder: (context) =>
+                            BookingTypeSelectionPage(trip: result),
                       ),
                     );
                   },

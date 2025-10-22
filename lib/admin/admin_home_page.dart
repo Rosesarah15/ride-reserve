@@ -1,6 +1,8 @@
-
 import 'package:bus_booking/admin/bookings_tab.dart';
 import 'package:bus_booking/admin/buses_tab.dart';
+import 'package:bus_booking/admin/companies_tab.dart';
+import 'package:bus_booking/admin/dashboard_tab.dart';
+import 'package:bus_booking/admin/pricing_tab.dart';
 import 'package:bus_booking/admin/routes_tab.dart';
 import 'package:bus_booking/admin/schedules_tab.dart';
 import 'package:bus_booking/auth/auth_page.dart';
@@ -14,13 +16,14 @@ class AdminHomePage extends StatefulWidget {
   State<AdminHomePage> createState() => _AdminHomePageState();
 }
 
-class _AdminHomePageState extends State<AdminHomePage> with SingleTickerProviderStateMixin {
+class _AdminHomePageState extends State<AdminHomePage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
   }
 
   @override
@@ -62,7 +65,11 @@ class _AdminHomePageState extends State<AdminHomePage> with SingleTickerProvider
         ],
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           tabs: const [
+            Tab(text: 'Dashboard', icon: Icon(Icons.dashboard)),
+            Tab(text: 'Companies', icon: Icon(Icons.business)),
+            Tab(text: 'Pricing', icon: Icon(Icons.attach_money)),
             Tab(text: 'Bookings', icon: Icon(Icons.book_online)),
             Tab(text: 'Schedules', icon: Icon(Icons.calendar_today)),
             Tab(text: 'Routes', icon: Icon(Icons.directions)),
@@ -73,6 +80,9 @@ class _AdminHomePageState extends State<AdminHomePage> with SingleTickerProvider
       body: TabBarView(
         controller: _tabController,
         children: const [
+          DashboardTab(),
+          CompaniesTab(),
+          PricingTab(),
           BookingsTab(),
           SchedulesTab(),
           RoutesTab(),

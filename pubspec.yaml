@@ -31,20 +31,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # ayinza packages
-  ayinza_commons:
-    git: git@github.com:ayinza-flutter-packages/ayinza_commons.git
-  shared:
-    git: git@github.com:ayinza-flutter-packages/shared.git
-  themes:
-    git: git@github.com:ayinza-flutter-packages/themes.git
-  ayinza_form_components:
-    git: git@github.com:ayinza-flutter-packages/ayinza_form_components.git
-  ayinza_auth:
-    git: git@github.com:ayinza-flutter-packages/ayinza_auth.git
-  ayinza_page_scaffold:
-    git: git@github.com:ayinza-flutter-packages/ayinza_page_scaffold.git
-
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8

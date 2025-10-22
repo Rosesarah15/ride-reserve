@@ -55,7 +55,7 @@ class _MyTripsPageState extends State<MyTripsPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text('Seat: ${bookingDetails.seatNumber}'),
+                      Text('Seats: ${bookingDetails.seatNumbers.join(", ")}'),
                       Text('Receipt: ${bookingDetails.receiptNumber.substring(0, 8)}...'),
                     ],
                   ),

@@ -87,7 +87,7 @@ class ReceiptPage extends StatelessWidget {
                     _buildReceiptRow('Bus Company', bookingDetails.busCompanyName),
                     _buildReceiptRow('Bus Number', bookingDetails.busNumberPlate),
                     _buildReceiptRow('Departure Time', bookingDetails.departureTime.toString()),
-                    _buildReceiptRow('Seat Number', bookingDetails.seatNumber),
+                    _buildReceiptRow('Seat Numbers', bookingDetails.seatNumbers.join(", ")),
                     _buildReceiptRow('Payment Method', bookingDetails.paymentMethod),
                     const Divider(),
                     _buildReceiptRow(
@@ -218,7 +218,7 @@ Destination: ${bookingDetails.destination}
 Bus Company: ${bookingDetails.busCompanyName}
 Bus Number: ${bookingDetails.busNumberPlate}
 Departure Time: ${bookingDetails.departureTime}
-Seat Number: ${bookingDetails.seatNumber}
+Seat Numbers: ${bookingDetails.seatNumbers.join(", ")}
 Payment Method: ${bookingDetails.paymentMethod}
 Total Amount: UGX ${bookingDetails.fee.toStringAsFixed(0)}
     ''';

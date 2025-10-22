@@ -1,5 +1,6 @@
 import 'package:bus_booking/models/booking_details_model.dart';
 import 'package:bus_booking/models/booking_model.dart';
+import 'package:bus_booking/models/booking_status.dart';
 import 'package:bus_booking/models/bus_model.dart';
 import 'package:bus_booking/models/company_model.dart';
 import 'package:bus_booking/models/route_model.dart';
@@ -107,7 +108,7 @@ class _BookingsTabState extends State<BookingsTab> {
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('${details.busCompanyName} - Seat ${details.seatNumber}'),
+                                Text('${details.busCompanyName} - Seats ${details.seatNumbers.join(", ")}'),
                                 Text('${DateFormat('MMM d, yyyy h:mm a').format(details.departureTime)}'),
                                 Text('Receipt: ${details.receiptNumber.substring(0, 8)}...'),
                               ],
@@ -222,7 +223,7 @@ class _BookingsTabState extends State<BookingsTab> {
               _buildDetailRow('Route', '${details.origin} → ${details.destination}'),
               _buildDetailRow('Company', details.busCompanyName),
               _buildDetailRow('Bus', details.busNumberPlate),
-              _buildDetailRow('Seat', details.seatNumber),
+              _buildDetailRow('Seats', details.seatNumbers.join(", ")),
               _buildDetailRow('Departure', DateFormat('MMM d, yyyy h:mm a').format(details.departureTime)),
               _buildDetailRow('Arrival', DateFormat('MMM d, yyyy h:mm a').format(details.arrivalTime)),
               _buildDetailRow('Payment', details.paymentMethod),

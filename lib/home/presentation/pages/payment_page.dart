@@ -1,5 +1,5 @@
-
 import 'package:bus_booking/models/booking_model.dart';
+import 'package:bus_booking/models/booking_status.dart';
 import 'package:bus_booking/models/trip_search_result.dart';
 import 'package:bus_booking/services/firebase_database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -36,10 +36,12 @@ class _PaymentPageState extends State<PaymentPage> {
         id: const Uuid().v4(),
         userId: user.uid,
         scheduleId: widget.trip.schedule.id,
-        seatNumber: widget.selectedSeat,
-        fee: widget.trip.schedule.fee,
+        seatNumbers: [widget.selectedSeat],
+        passengerCount: 1,
+        passengerFee: widget.trip.schedule.fee,
+        totalFee: widget.trip.schedule.fee,
         paymentMethod: paymentMethod,
-        status: BookingStatus.confirmed, // Mocking successful payment
+        status: BookingStatus.confirmed,
         bookingDate: DateTime.now(),
       );
 
