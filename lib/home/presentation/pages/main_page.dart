@@ -1,6 +1,5 @@
 import 'package:bus_booking/home/presentation/pages/home_page.dart';
 import 'package:bus_booking/home/presentation/pages/my_trips_page.dart';
-import 'package:bus_booking/home/presentation/pages/notifications_page.dart';
 import 'package:bus_booking/home/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +16,6 @@ class _MainPageState extends State<MainPage> {
   static const List<Widget> _pages = <Widget>[
     HomePage(),
     MyTripsPage(),
-    NotificationsPage(),
     SettingsPage(),
   ];
 
@@ -42,10 +40,6 @@ class _MainPageState extends State<MainPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_bus),
             label: 'My Trips',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifications',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

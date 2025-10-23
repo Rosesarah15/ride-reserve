@@ -2,6 +2,7 @@ import 'package:bus_booking/firebase_options.dart';
 import 'package:bus_booking/splash/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,34 +33,34 @@ class ApplicationEntry extends StatelessWidget {
           onSurface: Colors.black,
         ),
         scaffoldBackgroundColor: Colors.white,
-        appBarTheme: const AppBarTheme(
+        appBarTheme: AppBarTheme(
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
           elevation: 0.5,
           centerTitle: false,
           surfaceTintColor: Colors.transparent,
-          shadowColor: Color(0x1A000000),
-          titleTextStyle: TextStyle(
+          shadowColor: const Color(0x1A000000),
+          titleTextStyle: GoogleFonts.inter(
             color: Colors.black,
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
-          iconTheme: IconThemeData(
+          iconTheme: const IconThemeData(
             color: Colors.black,
           ),
         ),
-        tabBarTheme: const TabBarTheme(
+        tabBarTheme: TabBarTheme(
           labelColor: Colors.black,
-          unselectedLabelColor: Color(0xFF757575),
+          unselectedLabelColor: const Color(0xFF757575),
           indicatorColor: Colors.black,
           indicatorSize: TabBarIndicatorSize.tab,
-          labelStyle: TextStyle(
+          labelStyle: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontSize: 13,
           ),
-          unselectedLabelStyle: TextStyle(
+          unselectedLabelStyle: GoogleFonts.inter(
             fontWeight: FontWeight.normal,
-            fontSize: 14,
+            fontSize: 13,
           ),
         ),
         dialogTheme: DialogTheme(
@@ -69,21 +70,21 @@ class ApplicationEntry extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          titleTextStyle: const TextStyle(
+          titleTextStyle: GoogleFonts.inter(
             color: Colors.black,
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
-          contentTextStyle: const TextStyle(
+          contentTextStyle: GoogleFonts.poppins(
             color: Colors.black87,
-            fontSize: 14,
+            fontSize: 13,
           ),
         ),
         snackBarTheme: SnackBarThemeData(
           backgroundColor: Colors.black,
-          contentTextStyle: const TextStyle(
+          contentTextStyle: GoogleFonts.poppins(
             color: Colors.white,
-            fontSize: 14,
+            fontSize: 13,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -128,8 +129,8 @@ class ApplicationEntry extends StatelessWidget {
             backgroundColor: Colors.black,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            textStyle: const TextStyle(
-              fontSize: 14,
+            textStyle: GoogleFonts.inter(
+              fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
             shape: RoundedRectangleBorder(
@@ -160,24 +161,53 @@ class ApplicationEntry extends StatelessWidget {
           ),
           color: Colors.white,
         ),
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(
-            fontSize: 32,
+        textTheme: TextTheme(
+          displayLarge: GoogleFonts.inter(
+            fontSize: 26,
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
-          headlineMedium: TextStyle(
-            fontSize: 24,
+          headlineMedium: GoogleFonts.inter(
+            fontSize: 20,
             fontWeight: FontWeight.w600,
             color: Colors.black,
           ),
-          bodyLarge: TextStyle(
-            fontSize: 16,
-            color: Colors.black87,
+          titleLarge: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
           ),
-          bodyMedium: TextStyle(
+          titleMedium: GoogleFonts.inter(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+          bodyLarge: GoogleFonts.poppins(
             fontSize: 14,
             color: Colors.black87,
+          ),
+          bodyMedium: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.black87,
+          ),
+          bodySmall: GoogleFonts.poppins(
+            fontSize: 12,
+            color: Colors.black87,
+          ),
+          labelLarge: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+          ),
+          labelMedium: GoogleFonts.poppins(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+          ),
+          labelSmall: GoogleFonts.poppins(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
           ),
         ),
       ),

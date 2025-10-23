@@ -28,7 +28,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                 padding: const EdgeInsets.only(right: 16),
                 child: Text(
                   '${_selectedSeats.length} seat(s)',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                 ),
               ),
             ),
@@ -58,9 +58,9 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(8),
@@ -68,13 +68,13 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.blue.shade700),
+                      Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Children under 5 years travel free (no seat required)',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: Colors.blue.shade700,
                           ),
                         ),
@@ -141,14 +141,24 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                               ? Border.all(color: Colors.white, width: 2)
                               : null,
                         ),
-                        child: Center(
-                          child: Text(
-                            seatNumber,
-                            style: const TextStyle(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.event_seat,
                               color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                              size: 24,
                             ),
-                          ),
+                            const SizedBox(height: 2),
+                            Text(
+                              seatNumber,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -191,6 +201,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                   _selectedSeats.isEmpty
                       ? 'Select at least one seat'
                       : 'Continue (${_selectedSeats.length} seat${_selectedSeats.length > 1 ? "s" : ""})',
+                  style: const TextStyle(fontSize: 13),
                 ),
               ),
             ),
@@ -216,17 +227,22 @@ class _LegendItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 20,
-          height: 20,
+          width: 28,
+          height: 28,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: const Icon(
+            Icons.event_seat,
+            color: Colors.white,
+            size: 16,
           ),
         ),
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(fontSize: 12),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
         ),
       ],
     );

@@ -19,12 +19,22 @@ class _SearchPageState extends State<SearchPage> {
   List<String> _origins = [];
   List<String> _destinations = [];
 
+  final TextEditingController _originController = TextEditingController();
+  final TextEditingController _destinationController = TextEditingController();
+
   final FirebaseDatabaseService _databaseService = FirebaseDatabaseService();
 
   @override
   void initState() {
     super.initState();
     _getLocations();
+  }
+
+  @override
+  void dispose() {
+    _originController.dispose();
+    _destinationController.dispose();
+    super.dispose();
   }
 
   Future<void> _getLocations() async {
@@ -51,28 +61,66 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _search() {
-    if (_selectedOrigin == null) {
+    // Validate origin
+    final originText = _originController.text.trim();
+    if (originText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select an origin'),
+          content: Text('Please select an origin city'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
-    if (_selectedDestination == null) {
+    if (!_origins.contains(originText)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Invalid origin: "$originText". Please select from the available cities.'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
+    // Validate destination
+    final destinationText = _destinationController.text.trim();
+    if (destinationText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select a destination'),
+          content: Text('Please select a destination city'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
+    if (!_destinations.contains(destinationText)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Invalid destination: "$destinationText". Please select from the available cities.'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
+    // Check if origin and destination are the same
+    if (originText == destinationText) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Origin and destination cannot be the same'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate date
     if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select a date'),
+          content: Text('Please select a travel date'),
           backgroundColor: Colors.red,
         ),
       );
@@ -83,8 +131,8 @@ class _SearchPageState extends State<SearchPage> {
       context,
       MaterialPageRoute(
         builder: (context) => SearchResultsPage(
-          origin: _selectedOrigin!,
-          destination: _selectedDestination!,
+          origin: originText,
+          destination: destinationText,
           date: _selectedDate!,
         ),
       ),
@@ -135,9 +183,12 @@ class _SearchPageState extends State<SearchPage> {
               onSelected: (String selection) {
                 setState(() {
                   _selectedOrigin = selection;
+                  _originController.text = selection;
                 });
               },
               fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                // Sync with our controller
+                _originController.text = textEditingController.text;
                 return TextFormField(
                   controller: textEditingController,
                   focusNode: focusNode,
@@ -187,9 +238,12 @@ class _SearchPageState extends State<SearchPage> {
               onSelected: (String selection) {
                 setState(() {
                   _selectedDestination = selection;
+                  _destinationController.text = selection;
                 });
               },
               fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                // Sync with our controller
+                _destinationController.text = textEditingController.text;
                 return TextFormField(
                   controller: textEditingController,
                   focusNode: focusNode,

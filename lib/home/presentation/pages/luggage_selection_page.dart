@@ -120,19 +120,27 @@ class _LuggageSelectionPageState extends State<LuggageSelectionPage> {
           children: [
             Text(
               'Do you have luggage?',
-              style: Theme.of(context).textTheme.headlineMedium,
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'Add luggage to your booking if needed',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.grey.shade600,
                   ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: Colors.grey.shade300,
+                  width: 1,
+                ),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -153,7 +161,7 @@ class _LuggageSelectionPageState extends State<LuggageSelectionPage> {
                           child: Text(
                             'I have luggage',
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -179,9 +187,9 @@ class _LuggageSelectionPageState extends State<LuggageSelectionPage> {
                         onChanged: (_) => setState(() {}),
                       ),
                       if (_weightController.text.isNotEmpty) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(8),
@@ -191,13 +199,16 @@ class _LuggageSelectionPageState extends State<LuggageSelectionPage> {
                             children: [
                               const Text(
                                 'Luggage fee:',
-                                style: TextStyle(fontWeight: FontWeight.w500),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                ),
                               ),
                               Text(
                                 'UGX ${_luggageFee.toStringAsFixed(0)}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                                  fontSize: 14,
                                 ),
                               ),
                             ],
@@ -209,22 +220,30 @@ class _LuggageSelectionPageState extends State<LuggageSelectionPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Card(
+              elevation: 0,
               color: Colors.grey.shade50,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: Colors.grey.shade300,
+                  width: 1,
+                ),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Booking Summary',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const Divider(height: 24),
+                    const Divider(height: 20),
                     _SummaryRow(
                       label: 'Passengers',
                       value: '${widget.selectedSeats.length}',
@@ -247,7 +266,7 @@ class _LuggageSelectionPageState extends State<LuggageSelectionPage> {
                         value: 'UGX ${_luggageFee.toStringAsFixed(0)}',
                       ),
                     ],
-                    const Divider(height: 24),
+                    const Divider(height: 20),
                     _SummaryRow(
                       label: 'Total',
                       value: 'UGX ${_grandTotal.toStringAsFixed(0)}',
@@ -257,9 +276,9 @@ class _LuggageSelectionPageState extends State<LuggageSelectionPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.blue.shade50,
                 borderRadius: BorderRadius.circular(8),
@@ -267,13 +286,13 @@ class _LuggageSelectionPageState extends State<LuggageSelectionPage> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue.shade700),
-                  const SizedBox(width: 12),
+                  Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Children under 5 years travel free and don\'t require a seat',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 11,
                         color: Colors.blue.shade700,
                       ),
                     ),
@@ -292,7 +311,10 @@ class _LuggageSelectionPageState extends State<LuggageSelectionPage> {
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
             ),
-            child: const Text('Proceed to Payment'),
+            child: const Text(
+              'Proceed to Payment',
+              style: TextStyle(fontSize: 13),
+            ),
           ),
         ),
       ),
@@ -319,7 +341,7 @@ class _SummaryRow extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: isTotal ? 16 : 14,
+            fontSize: isTotal ? 14 : 13,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
             color: isTotal ? Colors.black : Colors.grey.shade700,
           ),
@@ -327,7 +349,7 @@ class _SummaryRow extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontSize: isTotal ? 18 : 14,
+            fontSize: isTotal ? 15 : 13,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
           ),
         ),

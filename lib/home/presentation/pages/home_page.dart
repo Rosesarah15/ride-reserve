@@ -1,5 +1,5 @@
+import 'package:bus_booking/home/presentation/pages/booking_type_selection_page.dart';
 import 'package:bus_booking/home/presentation/pages/search_page.dart';
-import 'package:bus_booking/home/presentation/pages/seat_selection_page.dart';
 import 'package:bus_booking/models/bus_model.dart';
 import 'package:bus_booking/models/company_model.dart';
 import 'package:bus_booking/models/pricing_model.dart';
@@ -250,7 +250,7 @@ class _TripCardState extends State<TripCard> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SeatSelectionPage(trip: trip),
+        builder: (context) => BookingTypeSelectionPage(trip: trip),
       ),
     );
   }

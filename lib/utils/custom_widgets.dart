@@ -211,7 +211,7 @@ class CustomButton extends StatelessWidget {
                         child: Text(
                           text,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -222,7 +222,7 @@ class CustomButton extends StatelessWidget {
                 : Text(
                     text,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -257,7 +257,7 @@ class CustomTextButton extends StatelessWidget {
       child: Text(
         text,
         style: const TextStyle(
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
       ),

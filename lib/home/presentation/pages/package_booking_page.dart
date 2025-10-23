@@ -138,9 +138,9 @@ class _PackageBookingPageState extends State<PackageBookingPage> {
             children: [
               Text(
                 'Package Type',
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _PackageTypeCard(
                 icon: Icons.inventory_2,
                 title: 'Parcel',
@@ -193,12 +193,12 @@ class _PackageBookingPageState extends State<PackageBookingPage> {
                   onChanged: (_) => setState(() {}),
                 ),
               ],
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               Text(
                 'Sender Information',
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _senderNameController,
                 decoration: const InputDecoration(
@@ -229,12 +229,12 @@ class _PackageBookingPageState extends State<PackageBookingPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               Text(
                 'Receiver Information',
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _receiverNameController,
                 decoration: const InputDecoration(
@@ -265,12 +265,12 @@ class _PackageBookingPageState extends State<PackageBookingPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               Text(
                 'Package Description (Optional)',
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 3,
@@ -280,26 +280,34 @@ class _PackageBookingPageState extends State<PackageBookingPage> {
                   prefixIcon: Icon(Icons.description),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               if (_totalPrice > 0)
                 Card(
+                  elevation: 0,
                   color: Colors.grey.shade50,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: Colors.grey.shade300,
+                      width: 1,
+                    ),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(14),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
                           'Total Price:',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
                           'UGX ${_totalPrice.toStringAsFixed(0)}',
                           style: const TextStyle(
-                            fontSize: 22,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -319,7 +327,10 @@ class _PackageBookingPageState extends State<PackageBookingPage> {
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
             ),
-            child: const Text('Proceed to Payment'),
+            child: const Text(
+              'Proceed to Payment',
+              style: TextStyle(fontSize: 13),
+            ),
           ),
         ),
       ),
@@ -347,21 +358,28 @@ class _PackageTypeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: isSelected ? 4 : 1,
+      elevation: 0,
       color: isSelected ? Colors.black : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isSelected ? Colors.black : Colors.grey.shade300,
+          width: isSelected ? 2 : 1,
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           child: Row(
             children: [
               Icon(
                 icon,
-                size: 32,
+                size: 26,
                 color: isSelected ? Colors.white : Colors.black,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -369,16 +387,16 @@ class _PackageTypeCard extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: isSelected ? Colors.white : Colors.black,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       description,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: isSelected
                             ? Colors.grey.shade300
                             : Colors.grey.shade600,
@@ -393,15 +411,18 @@ class _PackageTypeCard extends StatelessWidget {
                   Text(
                     price,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: isSelected ? Colors.white : Colors.black,
                     ),
                   ),
                   if (isSelected)
+                    const SizedBox(height: 4),
+                  if (isSelected)
                     const Icon(
                       Icons.check_circle,
                       color: Colors.white,
+                      size: 20,
                     ),
                 ],
               ),

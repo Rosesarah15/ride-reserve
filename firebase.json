@@ -1,1 +1,33 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"bus-booking-12776","appId":"1:823727097019:android:9f868a19c5a7a4de5fd59e","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"bus-booking-12776","appId":"1:823727097019:ios:fa1c00e922c7109d5fd59e","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"bus-booking-12776","configurations":{"android":"1:823727097019:android:9f868a19c5a7a4de5fd59e","ios":"1:823727097019:ios:fa1c00e922c7109d5fd59e"}}}}}}
+{
+  "firestore": {
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "bus-booking-12776",
+          "appId": "1:823727097019:android:9f868a19c5a7a4de5fd59e",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "bus-booking-12776",
+          "appId": "1:823727097019:ios:fa1c00e922c7109d5fd59e",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "bus-booking-12776",
+          "configurations": {
+            "android": "1:823727097019:android:9f868a19c5a7a4de5fd59e",
+            "ios": "1:823727097019:ios:fa1c00e922c7109d5fd59e"
+          }
+        }
+      }
+    }
+  }
+}

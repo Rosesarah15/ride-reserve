@@ -40,33 +40,56 @@ class FirebaseDatabaseService {
     required DateTime date,
   }) async {
     try {
-      // 1. Find the route id
-      final routeQuery = await _firestore.collection('routes')
-          .where('origin', isEqualTo: origin)
-          .where('destination', isEqualTo: destination)
-          .limit(1)
-          .get();
+      // 1. Find the route - get all routes and find matching one
+      final allRoutesQuery = await _firestore.collection('routes').get();
 
-      if (routeQuery.docs.isEmpty) {
-        return [];
+      if (allRoutesQuery.docs.isEmpty) {
+        throw Exception('No routes found in database');
       }
-      final route = RouteModel.fromMap(routeQuery.docs.first.data());
 
-      // 2. Find schedules for that route on the given date
-      final startOfDay = DateTime(date.year, date.month, date.day);
-      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+      // Find matching route (case-insensitive comparison)
+      RouteModel? matchingRoute;
+      for (var doc in allRoutesQuery.docs) {
+        final routeData = doc.data();
+        final routeOrigin = (routeData['origin'] as String).trim().toLowerCase();
+        final routeDestination = (routeData['destination'] as String).trim().toLowerCase();
 
+        if (routeOrigin == origin.trim().toLowerCase() &&
+            routeDestination == destination.trim().toLowerCase()) {
+          matchingRoute = RouteModel.fromMap(routeData);
+          break;
+        }
+      }
+
+      if (matchingRoute == null) {
+        throw Exception('No route found for $origin to $destination');
+      }
+
+      // 2. Find schedules for that route
       final scheduleQuery = await _firestore.collection('schedules')
-          .where('routeId', isEqualTo: route.id)
-          .where('departureTime', isGreaterThanOrEqualTo: startOfDay.toIso8601String())
-          .where('departureTime', isLessThanOrEqualTo: endOfDay.toIso8601String())
+          .where('routeId', isEqualTo: matchingRoute.id)
           .get();
 
       if (scheduleQuery.docs.isEmpty) {
-        return [];
+        throw Exception('No schedules found for this route');
       }
 
-      final schedules = scheduleQuery.docs.map((doc) => ScheduleModel.fromMap(doc.data())).toList();
+      // Filter schedules by the selected date
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+      final schedules = scheduleQuery.docs
+          .map((doc) => ScheduleModel.fromMap(doc.data()))
+          .where((schedule) {
+            // Check if the schedule's departure is on the selected date
+            return schedule.departureTime.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
+                   schedule.departureTime.isBefore(endOfDay.add(const Duration(seconds: 1)));
+          })
+          .toList();
+
+      if (schedules.isEmpty) {
+        throw Exception('No buses available on ${date.day}/${date.month}/${date.year}');
+      }
 
       // 3. Fetch bus and company details for each schedule
       List<TripSearchResult> results = [];
@@ -81,7 +104,7 @@ class FirebaseDatabaseService {
 
         results.add(TripSearchResult(
           schedule: schedule,
-          route: route,
+          route: matchingRoute,
           bus: bus,
           company: company,
         ));
@@ -90,7 +113,7 @@ class FirebaseDatabaseService {
       return results;
 
     } catch (e) {
-      throw Exception('Failed to search schedules: $e');
+      throw Exception('Search failed: ${e.toString().replaceAll('Exception: ', '')}');
     }
   }
 

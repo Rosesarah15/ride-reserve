@@ -109,32 +109,49 @@ class _PricingTabState extends State<PricingTab> {
           if (_companies.isNotEmpty)
             Container(
               padding: const EdgeInsets.all(16),
-              color: Colors.grey.shade100,
+              color: Colors.grey.shade50,
               child: Row(
                 children: [
                   const Text(
-                    'Select Company:',
+                    'Company:',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 16,
+                      fontSize: 13,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: DropdownButton<String>(
-                      value: _selectedCompanyId,
-                      isExpanded: true,
-                      items: _companies.map((company) {
-                        return DropdownMenuItem(
-                          value: company.id,
-                          child: Text(company.name),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedCompanyId = value;
-                        });
-                      },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 1,
+                        ),
+                      ),
+                      child: DropdownButton<String>(
+                        value: _selectedCompanyId,
+                        isExpanded: true,
+                        underline: const SizedBox(),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        items: _companies.map((company) {
+                          return DropdownMenuItem(
+                            value: company.id,
+                            child: Text(company.name),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedCompanyId = value;
+                          });
+                        },
+                      ),
                     ),
                   ),
                 ],
@@ -143,19 +160,35 @@ class _PricingTabState extends State<PricingTab> {
           Expanded(
             child: _selectedCompanyId == null
                 ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.attach_money,
-                          size: 64,
-                          color: Colors.grey.shade400,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text('No companies available'),
-                        const SizedBox(height: 8),
-                        const Text('Add a company first to configure pricing'),
-                      ],
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.business_outlined,
+                            size: 64,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'No Companies Available',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Add a company first to configure pricing',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   )
                 : StreamBuilder<QuerySnapshot>(
@@ -171,25 +204,34 @@ class _PricingTabState extends State<PricingTab> {
 
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                         return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.attach_money,
-                                size: 64,
-                                color: Colors.grey.shade400,
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'No pricing configured',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.attach_money,
+                                  size: 64,
+                                  color: Colors.grey.shade400,
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text('Add pricing for routes'),
-                            ],
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'No Pricing Configured',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Add pricing for routes to get started',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }
@@ -242,7 +284,15 @@ class _PricingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.grey.shade300,
+          width: 1,
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -262,7 +312,7 @@ class _PricingCard extends StatelessWidget {
                     pricing.busType.name.toUpperCase(),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                      fontSize: 11,
                       color: pricing.busType == BusTypeForPricing.vip
                           ? Colors.amber.shade900
                           : Colors.black,
@@ -271,12 +321,19 @@ class _PricingCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.edit),
+                  icon: const Icon(Icons.edit, size: 20),
                   onPressed: onEdit,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.grey.shade100,
+                  ),
                 ),
+                const SizedBox(width: 4),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
+                  icon: const Icon(Icons.delete, size: 20, color: Colors.red),
                   onPressed: onDelete,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.red.shade50,
+                  ),
                 ),
               ],
             ),
@@ -288,7 +345,10 @@ class _PricingCard extends StatelessWidget {
                   .get(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return const Text('Loading route...');
+                  return Text(
+                    'Loading route...',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  );
                 }
                 final route = RouteModel.fromMap(
                   snapshot.data!.data() as Map<String, dynamic>,
@@ -296,29 +356,40 @@ class _PricingCard extends StatelessWidget {
                 return Text(
                   '${route.origin} → ${route.destination}',
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
                   ),
                 );
               },
             ),
-            const Divider(height: 24),
-            _PriceRow(
-              icon: Icons.person,
-              label: 'Passenger',
-              price: pricing.passengerPrice,
-            ),
-            const SizedBox(height: 8),
-            _PriceRow(
-              icon: Icons.inventory_2,
-              label: 'Parcel (Standard)',
-              price: pricing.parcelStandardPrice,
-            ),
-            const SizedBox(height: 8),
-            _PriceRow(
-              icon: Icons.luggage,
-              label: 'Luggage (per kg)',
-              price: pricing.luggagePricePerKg,
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  _PriceRow(
+                    icon: Icons.person,
+                    label: 'Passenger',
+                    price: pricing.passengerPrice,
+                  ),
+                  const SizedBox(height: 10),
+                  _PriceRow(
+                    icon: Icons.inventory_2,
+                    label: 'Parcel (Standard)',
+                    price: pricing.parcelStandardPrice,
+                  ),
+                  const SizedBox(height: 10),
+                  _PriceRow(
+                    icon: Icons.luggage,
+                    label: 'Luggage (per kg)',
+                    price: pricing.luggagePricePerKg,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -342,19 +413,37 @@ class _PriceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: Colors.grey.shade600),
+        Icon(icon, size: 16, color: Colors.grey.shade600),
         const SizedBox(width: 8),
-        Text(
-          label,
-          style: TextStyle(color: Colors.grey.shade700),
-        ),
-        const Spacer(),
-        Text(
-          'UGX ${price.toStringAsFixed(0)}',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              'UGX ',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Text(
+              price.toStringAsFixed(0),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ],
         ),
       ],
     );
