@@ -1,4 +1,5 @@
 import 'package:bus_booking/admin/bookings_tab.dart';
+import 'package:bus_booking/admin/package_bookings_tab.dart';
 import 'package:bus_booking/admin/buses_tab.dart';
 import 'package:bus_booking/admin/companies_tab.dart';
 import 'package:bus_booking/admin/dashboard_tab.dart';
@@ -372,7 +373,7 @@ class _PassengerBookingsListPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Passenger Bookings', style: TextStyle(fontSize: 18)),
       ),
-      body: const BookingsTab(),
+      body: const PassengerBookingsTab(),
     );
   }
 }
@@ -386,7 +387,7 @@ class _PackageBookingsListPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Package Bookings', style: TextStyle(fontSize: 18)),
       ),
-      body: const BookingsTab(),
+      body: const PackageBookingsTab(),
     );
   }
 }

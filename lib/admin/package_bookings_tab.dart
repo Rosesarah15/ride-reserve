@@ -1,25 +1,24 @@
-import 'package:bus_booking/models/booking_details_model.dart';
-import 'package:bus_booking/models/booking_model.dart';
 import 'package:bus_booking/models/booking_status.dart';
 import 'package:bus_booking/models/bus_model.dart';
 import 'package:bus_booking/models/company_model.dart';
+import 'package:bus_booking/models/package_booking_model.dart';
 import 'package:bus_booking/models/route_model.dart';
 import 'package:bus_booking/models/schedule_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class PassengerBookingsTab extends StatefulWidget {
-  const PassengerBookingsTab({super.key});
+class PackageBookingsTab extends StatefulWidget {
+  const PackageBookingsTab({super.key});
 
   @override
-  State<PassengerBookingsTab> createState() => _PassengerBookingsTabState();
+  State<PackageBookingsTab> createState() => _PackageBookingsTabState();
 }
 
-class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
+class _PackageBookingsTabState extends State<PackageBookingsTab> {
   String _selectedStatus = 'All';
-  final List<BookingModel> _bookings = [];
-  final List<BookingModel> _bufferedBookings = [];
+  final List<PackageBookingModel> _bookings = [];
+  final List<PackageBookingModel> _bufferedBookings = [];
   DocumentSnapshot<Map<String, dynamic>>? _lastDocument;
   bool _isLoading = false;
   bool _isLoadingMore = false;
@@ -40,7 +39,6 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          // Status filter
           Row(
             children: [
               const Text('Filter by Status: '),
@@ -73,8 +71,8 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
                           children: [
                             Text(
                               _selectedStatus == 'All'
-                                  ? 'No passenger bookings found'
-                                  : 'No passenger bookings for this status',
+                                  ? 'No package bookings found'
+                                  : 'No package bookings for this status',
                             ),
                             if (_isLoadingMore)
                               const Padding(
@@ -134,7 +132,7 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
                             }
 
                             final booking = _bookings[index];
-                            return FutureBuilder<BookingDetailsModel?>(
+                            return FutureBuilder<PackageBookingDetails?>(
                               future: _getBookingDetails(booking),
                               builder: (context, detailsSnapshot) {
                                 if (detailsSnapshot.connectionState == ConnectionState.waiting) {
@@ -156,9 +154,9 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
                                   margin: const EdgeInsets.symmetric(vertical: 4),
                                   child: ListTile(
                                     leading: CircleAvatar(
-                                      backgroundColor: _getStatusColor(booking.status),
+                                      backgroundColor: _getTypeColor(details.booking.packageType),
                                       child: Icon(
-                                        _getStatusIcon(booking.status),
+                                        _getTypeIcon(details.booking.packageType),
                                         color: Colors.white,
                                       ),
                                     ),
@@ -166,11 +164,9 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
                                     subtitle: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text('${details.busCompanyName} - Seats ${details.seatNumbers.join(", ")}'),
-                                        if (booking.hasLuggage == true && booking.luggageWeightInKg != null)
-                                          Text('Includes luggage: ${booking.luggageWeightInKg} kg'),
-                                        Text('${DateFormat('MMM d, yyyy h:mm a').format(details.departureTime)}'),
-                                        Text('Receipt: ${details.receiptNumber.substring(0, 8)}...'),
+                                        Text('${details.companyName} • ${details.packageTypeLabel}'),
+                                        Text(DateFormat('MMM d, yyyy h:mm a').format(details.departureTime)),
+                                        Text('Sender: ${details.booking.senderName} • Receiver: ${details.booking.receiverName}'),
                                       ],
                                     ),
                                     trailing: Column(
@@ -183,7 +179,7 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        Text('UGX ${details.fee.toStringAsFixed(0)}'),
+                                        Text('UGX ${details.booking.totalPrice.toStringAsFixed(0)}'),
                                       ],
                                     ),
                                     onTap: () => _showBookingDetails(details),
@@ -222,7 +218,7 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
       if (_isLoadingMore) return;
       if (_bufferedBookings.isNotEmpty) {
         final takeCount = _bufferedBookings.length >= _pageSize ? _pageSize : _bufferedBookings.length;
-        final toAdd = List<BookingModel>.from(_bufferedBookings.take(takeCount));
+        final toAdd = List<PackageBookingModel>.from(_bufferedBookings.take(takeCount));
         setState(() {
           _bookings.addAll(toAdd);
           _bufferedBookings.removeRange(0, takeCount);
@@ -236,13 +232,13 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
     }
 
     try {
-      final List<BookingModel> fetched = [];
+      final List<PackageBookingModel> fetched = [];
       var localLastDocument = _lastDocument;
       var localHasMore = _hasMore;
 
       while (fetched.length < _pageSize && localHasMore) {
         Query<Map<String, dynamic>> query = FirebaseFirestore.instance
-            .collection('bookings')
+            .collection('package_bookings')
             .orderBy('bookingDate', descending: true)
             .limit(_queryBatchSize);
 
@@ -260,7 +256,7 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
         localLastDocument = snapshot.docs.last;
 
         final docs = snapshot.docs
-            .map((doc) => BookingModel.fromMap(doc.data()))
+            .map((doc) => PackageBookingModel.fromMap(doc.data()))
             .where(_matchesFilters)
             .toList();
 
@@ -295,19 +291,14 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
     }
   }
 
-  bool _matchesFilters(BookingModel booking) {
-    if (booking.seatNumbers.isEmpty) {
-      return false;
+  bool _matchesFilters(PackageBookingModel booking) {
+    if (_selectedStatus == 'All') {
+      return true;
     }
-
-    if (_selectedStatus != 'All' && booking.status.name != _selectedStatus) {
-      return false;
-    }
-
-    return true;
+    return booking.status.name == _selectedStatus;
   }
 
-  Future<BookingDetailsModel?> _getBookingDetails(BookingModel booking) async {
+  Future<PackageBookingDetails?> _getBookingDetails(PackageBookingModel booking) async {
     try {
       final scheduleDoc = await FirebaseFirestore.instance
           .collection('schedules')
@@ -337,66 +328,43 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
       if (!companyDoc.exists) return null;
       final company = CompanyModel.fromMap(companyDoc.data()!);
 
-      return BookingDetailsModel(
+      return PackageBookingDetails(
         booking: booking,
         schedule: schedule,
         route: route,
         bus: bus,
         company: company,
       );
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
 
-  Color _getStatusColor(BookingStatus status) {
-    switch (status) {
-      case BookingStatus.confirmed:
-        return Colors.green;
-      case BookingStatus.pending:
-        return Colors.orange;
-      case BookingStatus.cancelled:
-        return Colors.red;
-      case BookingStatus.completed:
-        return Colors.blue;
-    }
-  }
-
-  IconData _getStatusIcon(BookingStatus status) {
-    switch (status) {
-      case BookingStatus.confirmed:
-        return Icons.check_circle;
-      case BookingStatus.pending:
-        return Icons.access_time;
-      case BookingStatus.cancelled:
-        return Icons.cancel;
-      case BookingStatus.completed:
-        return Icons.done_all;
-    }
-  }
-
-  void _showBookingDetails(BookingDetailsModel details) {
+  void _showBookingDetails(PackageBookingDetails details) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Booking Details'),
+        title: const Text('Package Booking Details'),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow('Receipt', details.receiptNumber),
+              _buildDetailRow('Booking ID', details.booking.id),
               _buildDetailRow('Route', '${details.origin} → ${details.destination}'),
-              _buildDetailRow('Company', details.busCompanyName),
+              _buildDetailRow('Company', details.companyName),
               _buildDetailRow('Bus', details.busNumberPlate),
-              _buildDetailRow('Seats', details.seatNumbers.join(", ")),
+              _buildDetailRow('Package Type', details.packageTypeLabel),
+              if (details.booking.weightInKg != null)
+                _buildDetailRow('Weight', '${details.booking.weightInKg} kg'),
+              _buildDetailRow('Sender', '${details.booking.senderName} (${details.booking.senderPhone})'),
+              _buildDetailRow('Receiver', '${details.booking.receiverName} (${details.booking.receiverPhone})'),
+              if (details.booking.description != null && details.booking.description!.isNotEmpty)
+                _buildDetailRow('Description', details.booking.description!),
               _buildDetailRow('Departure', DateFormat('MMM d, yyyy h:mm a').format(details.departureTime)),
-              _buildDetailRow('Arrival', DateFormat('MMM d, yyyy h:mm a').format(details.arrivalTime)),
-              _buildDetailRow('Payment', details.paymentMethod),
-              _buildDetailRow('Status', details.status.name.toUpperCase()),
-              _buildDetailRow('Amount', 'UGX ${details.fee.toStringAsFixed(0)}'),
-              if (details.booking.hasLuggage == true && details.booking.luggageWeightInKg != null)
-                _buildDetailRow('Luggage', '${details.booking.luggageWeightInKg} kg • UGX ${details.booking.luggageFee?.toStringAsFixed(0) ?? '0'}'),
+              _buildDetailRow('Payment', details.booking.paymentMethod),
+              _buildDetailRow('Status', details.booking.status.name.toUpperCase()),
+              _buildDetailRow('Amount', 'UGX ${details.booking.totalPrice.toStringAsFixed(0)}'),
             ],
           ),
         ),
@@ -417,7 +385,7 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 80,
+            width: 110,
             child: Text(
               '$label:',
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -428,4 +396,55 @@ class _PassengerBookingsTabState extends State<PassengerBookingsTab> {
       ),
     );
   }
+
+  Color _getStatusColor(BookingStatus status) {
+    switch (status) {
+      case BookingStatus.confirmed:
+        return Colors.green;
+      case BookingStatus.pending:
+        return Colors.orange;
+      case BookingStatus.cancelled:
+        return Colors.red;
+      case BookingStatus.completed:
+        return Colors.blue;
+    }
+  }
+
+  Color _getTypeColor(PackageType type) {
+    return switch (type) {
+      PackageType.parcel => Colors.purple,
+      PackageType.luggage => Colors.teal,
+    };
+  }
+
+  IconData _getTypeIcon(PackageType type) {
+    return switch (type) {
+      PackageType.parcel => Icons.inventory_2,
+      PackageType.luggage => Icons.luggage,
+    };
+  }
 }
+
+class PackageBookingDetails {
+  final PackageBookingModel booking;
+  final ScheduleModel schedule;
+  final RouteModel route;
+  final BusModel bus;
+  final CompanyModel company;
+
+  PackageBookingDetails({
+    required this.booking,
+    required this.schedule,
+    required this.route,
+    required this.bus,
+    required this.company,
+  });
+
+  String get origin => route.origin;
+  String get destination => route.destination;
+  String get companyName => company.name;
+  String get busNumberPlate => bus.numberPlate;
+  DateTime get departureTime => schedule.departureTime;
+  String get packageTypeLabel => booking.packageType.name.toUpperCase();
+}
+
