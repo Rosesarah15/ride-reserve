@@ -18,6 +18,28 @@ class _RoutesTabState extends State<RoutesTab> {
   final _destinationController = TextEditingController();
   final FirebaseDatabaseService _databaseService = FirebaseDatabaseService();
   bool _isCreating = false;
+  final List<RouteModel> _routes = [];
+  final List<RouteModel> _bufferedRoutes = [];
+  DocumentSnapshot<Map<String, dynamic>>? _lastRouteDocument;
+  bool _isLoadingRoutes = false;
+  bool _isLoadingMoreRoutes = false;
+  bool _hasMoreRoutes = true;
+
+  static const int _routePageSize = 6;
+  static const int _routeQueryBatchSize = 18;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMoreRoutes(reset: true);
+  }
+
+  @override
+  void dispose() {
+    _originController.dispose();
+    _destinationController.dispose();
+    super.dispose();
+  }
 
   Future<void> _createRoute() async {
     if (_formKey.currentState!.validate()) {
@@ -32,6 +54,8 @@ class _RoutesTabState extends State<RoutesTab> {
         await _databaseService.createRoute(route);
         _originController.clear();
         _destinationController.clear();
+
+        await _loadMoreRoutes(reset: true);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -56,6 +80,103 @@ class _RoutesTabState extends State<RoutesTab> {
         }
       }
     }
+  }
+
+  Future<void> _loadMoreRoutes({bool reset = false}) async {
+    if (reset) {
+      if (_isLoadingRoutes) return;
+      setState(() {
+        _isLoadingRoutes = true;
+        _isLoadingMoreRoutes = false;
+        _routes.clear();
+        _bufferedRoutes.clear();
+        _lastRouteDocument = null;
+        _hasMoreRoutes = true;
+      });
+    } else {
+      if (_isLoadingMoreRoutes) return;
+
+      if (_bufferedRoutes.isNotEmpty) {
+        final takeCount = _bufferedRoutes.length >= _routePageSize ? _routePageSize : _bufferedRoutes.length;
+        final toAdd = List<RouteModel>.from(_bufferedRoutes.take(takeCount));
+        setState(() {
+          _routes.addAll(toAdd);
+          _bufferedRoutes.removeRange(0, takeCount);
+        });
+        return;
+      }
+
+      if (!_hasMoreRoutes) return;
+
+      setState(() {
+        _isLoadingMoreRoutes = true;
+      });
+    }
+
+    try {
+      final List<RouteModel> fetched = [];
+      var localLastDocument = _lastRouteDocument;
+      var localHasMore = _hasMoreRoutes;
+
+      while (fetched.length < _routePageSize && localHasMore) {
+        Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+            .collection('routes')
+            .orderBy('origin')
+            .limit(_routeQueryBatchSize);
+
+        if (localLastDocument != null) {
+          query = query.startAfterDocument(localLastDocument);
+        }
+
+        final snapshot = await query.get();
+
+        if (snapshot.docs.isEmpty) {
+          localHasMore = false;
+          break;
+        }
+
+        localLastDocument = snapshot.docs.last;
+
+        final docs = snapshot.docs
+            .map((doc) => RouteModel.fromMap(doc.data()))
+            .toList();
+
+        fetched.addAll(docs);
+
+        if (snapshot.docs.length < _routeQueryBatchSize) {
+          localHasMore = false;
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _hasMoreRoutes = localHasMore;
+        _lastRouteDocument = localLastDocument;
+
+        if (fetched.isNotEmpty) {
+          final takeCount = fetched.length >= _routePageSize ? _routePageSize : fetched.length;
+          _routes.addAll(fetched.take(takeCount));
+          _bufferedRoutes.addAll(fetched.skip(takeCount));
+        }
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        if (reset) {
+          _isLoadingRoutes = false;
+        } else {
+          _isLoadingMoreRoutes = false;
+        }
+      });
+    }
+  }
+
+  String _formatRouteId(String id) {
+    if (id.length > 8) {
+      return '${id.substring(0, 8)}...';
+    }
+    return id;
   }
 
   @override
@@ -105,22 +226,13 @@ class _RoutesTabState extends State<RoutesTab> {
             icon: Icons.route,
           ),
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _databaseService.getRoutesStream(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      'Error: ${snapshot.error}',
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  );
-                }
-                if (snapshot.connectionState == ConnectionState.waiting) {
+            child: Builder(
+              builder: (context) {
+                if (_isLoadingRoutes && _routes.isEmpty) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                if (_routes.isEmpty) {
                   return const EmptyStateWidget(
                     icon: Icons.route,
                     title: 'No routes yet',
@@ -128,53 +240,91 @@ class _RoutesTabState extends State<RoutesTab> {
                   );
                 }
 
-                final routes = snapshot.data!.docs.map((doc) => RouteModel.fromMap(doc.data() as Map<String, dynamic>)).toList();
-                return ListView.builder(
-                  itemCount: routes.length,
-                  itemBuilder: (context, index) {
-                    final route = routes[index];
-                    return CustomCard(
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.directions_bus,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${route.origin} → ${route.destination}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Route ID: ${route.id.substring(0, 8)}...',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
+                final routesSnapshot = List<RouteModel>.from(_routes);
+                final showLoadMore = _bufferedRoutes.isNotEmpty || _hasMoreRoutes || _isLoadingMoreRoutes;
+                final totalCount = routesSnapshot.length + (showLoadMore ? 1 : 0);
+
+                return RefreshIndicator(
+                  onRefresh: () => _loadMoreRoutes(reset: true),
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: totalCount,
+                    itemBuilder: (context, index) {
+                      if (index >= routesSnapshot.length) {
+                        if (_isLoadingMoreRoutes) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+
+                        if (_bufferedRoutes.isEmpty && !_hasMoreRoutes) {
+                          return const SizedBox(height: 24);
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 12, bottom: 24),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () => _loadMoreRoutes(),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Load more'),
+                                  SizedBox(width: 4),
+                                  Icon(Icons.keyboard_arrow_right),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    );
-                  },
+                        );
+                      }
+
+                      final route = routesSnapshot[index];
+                      return CustomCard(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.black,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.directions_bus,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${route.origin} → ${route.destination}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Route ID: ${_formatRouteId(route.id)}',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 );
               },
             ),

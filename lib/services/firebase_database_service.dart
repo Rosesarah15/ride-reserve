@@ -426,7 +426,39 @@ class FirebaseDatabaseService {
   }
 
   Future<void> createBus(BusModel bus) async {
-    await _firestore.collection('buses').doc(bus.id).set(bus.toMap());
+    final formattedPlate = _formatNumberPlate(bus.numberPlate);
+    final normalizedPlate = _normalizeNumberPlate(formattedPlate);
+
+    // First, try to find matches using the normalized field (new records)
+    QuerySnapshot normalizedMatches = await _firestore
+        .collection('buses')
+        .where('numberPlateNormalized', isEqualTo: normalizedPlate)
+        .limit(1)
+        .get();
+
+    bool isTaken = normalizedMatches.docs.isNotEmpty;
+
+    // Fallback for legacy records that don't have the normalized field stored yet
+    if (!isTaken) {
+      final legacyMatches = await _firestore
+          .collection('buses')
+          .where('numberPlate', isEqualTo: formattedPlate)
+          .limit(1)
+          .get();
+      isTaken = legacyMatches.docs.isNotEmpty;
+    }
+
+    if (isTaken) {
+      throw Exception('A bus with number plate $formattedPlate already exists.');
+    }
+
+    final busData = {
+      ...bus.toMap(),
+      'numberPlate': formattedPlate,
+      'numberPlateNormalized': normalizedPlate,
+    };
+
+    await _firestore.collection('buses').doc(bus.id).set(busData);
   }
 
   Stream<QuerySnapshot> getBusesStream() {
@@ -581,4 +613,15 @@ class FirebaseDatabaseService {
     await batch.commit();
     print('Sample data initialization completed successfully');
   }
+}
+
+String _normalizeNumberPlate(String numberPlate) {
+  return numberPlate
+      .toUpperCase()
+      .replaceAll(RegExp(r'[^A-Z0-9]'), '');
+}
+
+String _formatNumberPlate(String numberPlate) {
+  final trimmed = numberPlate.trim().toUpperCase();
+  return trimmed.replaceAll(RegExp(r'\s+'), ' ');
 }
