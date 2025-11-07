@@ -84,7 +84,7 @@ class _RoutesTabState extends State<RoutesTab> {
                 CustomTextField(
                   controller: _destinationController,
                   labelText: 'Destination City',
-                  hintText: 'e.g., Gulu',
+                  hintText: 'e.g., Mukono',
                   prefixIcon: Icons.location_on,
                   validator: (value) => value == null || value.isEmpty ? 'Please enter a destination' : null,
                 ),

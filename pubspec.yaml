@@ -58,9 +58,12 @@ dependencies:
   cloud_functions: ^5.0.0
   uuid: ^4.4.0
   google_fonts: ^6.2.1
+  mockito: ^5.5.1
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
 
   flutter_lints: ^4.0.0

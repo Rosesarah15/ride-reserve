@@ -1,4 +1,5 @@
 import 'package:bus_booking/models/booking_status.dart';
+import 'package:bus_booking/models/notification_model.dart';
 import 'package:bus_booking/models/package_booking_model.dart';
 import 'package:bus_booking/models/trip_search_result.dart';
 import 'package:bus_booking/services/firebase_database_service.dart';
@@ -67,6 +68,33 @@ class _PackagePaymentPageState extends State<PackagePaymentPage> {
       );
 
       await _databaseService.createPackageBooking(packageBooking);
+
+      final notification = NotificationModel(
+        id: const Uuid().v4(),
+        userId: user.uid,
+        title: 'Package Booking Confirmed',
+        message:
+            '${widget.trip.route.origin} → ${widget.trip.route.destination} on ${DateFormat('MMM d, yyyy • h:mm a').format(widget.trip.schedule.departureTime)}',
+        type: NotificationType.booking,
+        createdAt: DateTime.now(),
+        data: {
+          'bookingId': packageBooking.id,
+          'packageType': packageBooking.packageType.name,
+          'paymentMethod': packageBooking.paymentMethod,
+          'totalPrice': packageBooking.totalPrice,
+          'weightInKg': packageBooking.weightInKg,
+          'senderName': packageBooking.senderName,
+          'receiverName': packageBooking.receiverName,
+          'departureTime': widget.trip.schedule.departureTime.toIso8601String(),
+          'arrivalTime': widget.trip.schedule.arrivalTime.toIso8601String(),
+          'origin': widget.trip.route.origin,
+          'destination': widget.trip.route.destination,
+          'company': widget.trip.company.name,
+          'busNumberPlate': widget.trip.bus.numberPlate,
+        },
+      );
+
+      await _databaseService.createNotification(notification);
 
       if (mounted) {
         showDialog(

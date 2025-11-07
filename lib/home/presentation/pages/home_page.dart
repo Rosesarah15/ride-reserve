@@ -1,4 +1,5 @@
 import 'package:bus_booking/home/presentation/pages/booking_type_selection_page.dart';
+import 'package:bus_booking/home/presentation/pages/notifications_page.dart';
 import 'package:bus_booking/home/presentation/pages/search_page.dart';
 import 'package:bus_booking/models/bus_model.dart';
 import 'package:bus_booking/models/company_model.dart';
@@ -22,23 +23,32 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String? _userFirstname;
+  User? _currentUser;
   final FirebaseDatabaseService _databaseService = FirebaseDatabaseService();
 
   @override
   void initState() {
     super.initState();
-    _getUserName();
+    _loadUserData();
   }
 
-  Future<void> _getUserName() async {
+  Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (doc.exists) {
-        setState(() {
-          _userFirstname = doc.data()!['FirstName'];
-        });
-      }
+    if (!mounted) return;
+
+    setState(() {
+      _currentUser = user;
+    });
+
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    if (!mounted) return;
+
+    if (doc.exists) {
+      setState(() {
+        _userFirstname = doc.data()!['FirstName'];
+      });
     }
   }
 
@@ -49,12 +59,60 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _navigateToNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const NotificationsPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Hello, ${_userFirstname ?? 'Guest'}'),
         actions: [
+          if (_currentUser != null)
+            StreamBuilder<int>(
+              stream: _databaseService.getUnreadNotificationCountStream(_currentUser!.uid),
+              builder: (context, snapshot) {
+                final unreadCount = snapshot.data ?? 0;
+
+                return IconButton(
+                  onPressed: _navigateToNotifications,
+                  tooltip: 'Notifications',
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.notifications_none, size: 22),
+                      if (unreadCount > 0)
+                        Positioned(
+                          top: -4,
+                          right: -4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                            child: Center(
+                              child: Text(
+                                unreadCount > 9 ? '9+' : unreadCount.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
           IconButton(
             onPressed: _navigateToSearch,
             icon: const Icon(Icons.search, size: 22),

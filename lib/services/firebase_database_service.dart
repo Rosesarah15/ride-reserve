@@ -225,8 +225,11 @@ class FirebaseDatabaseService {
   // Notification operations
   Future<String> createNotification(NotificationModel notification) async {
     try {
-      final docRef = await _firestore.collection('notifications').add(notification.toMap());
-      return docRef.id;
+      await _firestore
+          .collection('notifications')
+          .doc(notification.id)
+          .set(notification.toMap());
+      return notification.id;
     } catch (e) {
       throw Exception('Failed to create notification: $e');
     }
@@ -271,6 +274,39 @@ class FirebaseDatabaseService {
     } catch (e) {
       throw Exception('Failed to mark notification as read: $e');
     }
+  }
+
+  Stream<int> getUnreadNotificationCountStream(String userId) {
+    return _firestore
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .where('isRead', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
+  Stream<List<NotificationModel>> getUserNotificationsStream(String userId) {
+    return _firestore
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+            .map((doc) => NotificationModel.fromMap(doc.data()))
+              .toList(),
+        );
+  }
+
+  Future<void> markNotificationsAsRead(List<String> notificationIds) async {
+    if (notificationIds.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (final id in notificationIds) {
+      final docRef = _firestore.collection('notifications').doc(id);
+      batch.update(docRef, {'isRead': true});
+    }
+    await batch.commit();
   }
 
   // Pricing operations

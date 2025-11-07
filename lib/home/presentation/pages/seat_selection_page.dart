@@ -41,7 +41,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
             color: Colors.grey.shade100,
             child: Column(
               children: [
-                Row(
+                const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _LegendItem(

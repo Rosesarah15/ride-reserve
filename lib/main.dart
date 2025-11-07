@@ -1,4 +1,5 @@
 import 'package:bus_booking/firebase_options.dart';
+import 'package:bus_booking/services/firebase_database_service.dart';
 import 'package:bus_booking/splash/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,10 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // TODO: This should be called only once, ideally from an admin panel.
+  await FirebaseDatabaseService().initializeSampleData();
+  
   runApp(const ApplicationEntry());
 }
 
